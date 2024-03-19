@@ -1,0 +1,380 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Mining Web App</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .input_upload {
+            display: flex;
+            align-items: center;
+        }
+
+        .input_upload input,
+        .input_upload button,
+        .input_upload select {
+            margin-right: 10px;
+            margin-top: 10px;
+            /* 调整元素之间的右边距 */
+        }
+
+        .input_upload button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            --color: #E1E1E1;
+            background-color: #F3F3F3;
+            background-image: linear-gradient(0deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%, transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%, transparent),
+            linear-gradient(90deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%, transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%, transparent);
+            background-size: 55px 55px;
+        }
+
+        .scrollable-container {
+            height: 100vh;
+            overflow-y: scroll;
+        }
+
+        .header {
+            display: flex;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            height: 8vh;
+            padding: 20px;
+            background-color: #333;
+            color: #fff;
+        }
+
+
+        button {
+            background-color: white;
+            color: black;
+            border-radius: 10em;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 1em 2em;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid black;
+            box-shadow: 0 0 0 0 black;
+        }
+
+        button:hover {
+            transform: translateY(-4px) translateX(-2px);
+            box-shadow: 2px 5px 0 0 black;
+        }
+
+        button:active {
+            transform: translateY(2px) translateX(1px);
+            box-shadow: 0 0 0 0 black;
+        }
+
+        input {
+            border: none;
+            outline: none;
+            border-radius: 15px;
+            padding: 1em;
+            background-color: #ccc;
+            box-shadow: inset 2px 5px 10px rgba(0, 0, 0, 0.3);
+            transition: 300ms ease-in-out;
+        }
+
+        input:focus {
+            background-color: white;
+            transform: scale(1.05);
+            box-shadow: 13px 13px 100px #969696,
+            -13px -13px 100px #ffffff;
+        }
+
+        select {
+            background-color: white;
+            color: black;
+            border-radius: 10em;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 1em 2em;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid black;
+            box-shadow: 0 0 0 0 black;
+            width: 8vw;
+        }
+    </style>
+</head>
+<body>
+<div class="scrollable-container">
+    <div class="header">
+        <h1>Data Mining Web App</h1>
+    </div>
+    <div class="input_upload button" style="gap: 30px">
+        <input type="file" id="fileInput"/>
+        <button onclick="uploadFile()">Upload CSV</button>
+        <button onclick="fetchTableNames()">Read from Database</button>
+        <button onclick="visualizeTableData()">showtable</button>
+        <!-- 添加下拉菜单用于选择数据库表 -->
+        <select id="tableSelect" style="" >
+            <!-- 表格选项将动态添加在这里 -->
+        </select>
+        <button onclick="updatePieChart()">showpie</button>
+        <select id="propertySelector" onchange="updatePieChart()" style="width: 11vw">
+            <option value="PropType">PropType</option>
+            <option value="nbhd">nbhd</option>
+            <option value="Style">Style</option>
+            <option value="Stories">Stories</option>
+            <option value="Year_Built">Year_Built</option>
+            <option value="Rooms">Rooms</option>
+            <option value="FinishedSqft">FinishedSqft</option>
+            <option value="Units">Units</option>
+            <option value="Bdrms">Bdrms</option>
+            <option value="Fbath">Fbath</option>
+            <option value="Hbath">Hbath</option>
+            <option value="Sale_price">Sale_price</option>
+            <option value="RICH">RICH</option>
+
+        </select>
+    </div>
+    <!-- 添加分割线 -->
+    <hr style="border: 1px solid lightgray; margin-top: 10px; margin-bottom: 10px;">
+
+    <!-- 源数据集可视化区 -->
+    <div style="display: flex;">
+        <div id="show_area" style="width: 800px; height: 600px;background: #dedede;flex: 1"></div>
+        <div id="bt" style="flex:1">
+            <div id="pieChart" style="width: 100%; height: 100%;"></div>
+        </div>
+
+    </div>
+    <div>
+        <div id="show_button" style=" display: flex; height: 15vh;margin-top: 30px ; justify-content: center;gap: 25vw">
+            <button onclick="runAlgorithm('dbscan')" style=" width:8vw; height: 8vh">dbscan</button>
+            <button onclick="runAlgorithm('km')" style=" width:8vw; height: 8vh">km</button>
+            <button onclick="runAlgorithm('kme')" style=" width:8vw; height: 8vh">kme</button>
+        </div>
+        <div style="display: flex;flex-direction: row;gap: 30px;justify-content: center">
+            <div id="show_area"
+                 style="width: 30vw; height: 600px;display: flex;flex-direction: column;justify-content: center;align-items: center">
+                <img id="clusterImage" src="../static/xx.png" style="width: 100%; height: 600px;" alt="Cluster Image">
+                <input id="textareaResult" style="background: #4CAF50;width:60%;height: 20px;">
+            </div>
+            <div id="show_area"
+                 style="width: 30vw; height: 600px;display: flex;flex-direction: column;justify-content: center;align-items: center">
+                <img id="clusterImage2" src="../static/xx.png" style="width: 100%; height: 600px;" alt="Cluster Image">
+                <input id="textareaResult2" style="background: #4CAF50;width:60%;height: 20px;">
+            </div>
+            <div id="show_area"
+                 style="width: 30vw; height: 600px;display: flex;flex-direction: column;justify-content: center;align-items: center">
+                <img id="clusterImage3" src="../static/xx.png" style="width: 100%; height: 600px;" alt="Cluster Image">
+                <input id="textareaResult3" style="background: #4CAF50;width:60%;height: 20px;">
+            </div>
+        </div>
+    </div>
+    r
+
+
+</div>
+
+<!-- Add the file input and upload button -->
+
+
+<script>
+    function updatePieChart() {
+        var selectedTableName = document.getElementById('tableSelect').value;
+        fetch(`/table_data?table=${selectedTableName}`)
+            .then(response => response.json())
+            .then(data => {
+                var myChart = echarts.init(document.getElementById('pieChart'));
+                selectedProperty = document.getElementById('propertySelector').value;
+                console.log('表格数据:', data);
+
+                // 预处理数据，合并相同属性的值
+                const processedData = {};
+                data.forEach(item => {
+                    const key = item[selectedProperty];
+                    if (key in processedData) {
+                        // 已存在，累加值
+                        processedData[key] += 1;
+                    } else {
+                        // 不存在，初始化值
+                        processedData[key] = 1;
+                    }
+                });
+
+                // 计算总数
+                const total = Object.values(processedData).reduce((sum, count) => sum + count, 0);
+
+                // 将处理后的数据转为饼图需要的格式
+                const pieData = Object.entries(processedData).map(([key, count]) => ({
+                    name: key,
+                    value: (count / total) * 100, // 计算百分比
+                }));
+
+                const option = {
+                    title: {
+                        text: `${selectedProperty} 百分比分布饼图`,
+                        subtext: `根据 ${selectedProperty} 分布`,
+                    },
+                    series: [{
+                        name: `${selectedProperty} 百分比分布`,
+                        type: 'pie',
+                        radius: '50%',
+                        data: pieData,
+                    }],
+                };
+
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+            })
+    }
+
+
+    function visualizeTableData() {
+        // 获取当前选定的表名
+        var selectedTableName = document.getElementById('tableSelect').value;
+
+        // 发送请求给后端，获取选定表的数据
+        fetch(`/get_table_data?table=${selectedTableName}`)
+            .then(response => response.json())
+            .then(data => {
+                // 在这里执行数据可视化的操作
+                console.log('表格数据:', data);
+
+                // 创建表格元素
+                var table = document.createElement('table');
+                table.style.width = '100%';
+                table.style.borderCollapse = 'collapse';
+
+                // 创建表头
+                var thead = document.createElement('thead');
+                var headerRow = document.createElement('tr');
+
+                Object.keys(data[0]).forEach(column => {
+                    var th = document.createElement('th');
+                    th.textContent = column;
+                    th.style.border = '1px solid #ddd';
+                    th.style.padding = '8px';
+                    headerRow.appendChild(th);
+                });
+
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // 创建表格内容
+                var tbody = document.createElement('tbody');
+                data.forEach(rowData => {
+                    var row = document.createElement('tr');
+
+                    Object.values(rowData).forEach(value => {
+                        var td = document.createElement('td');
+                        td.textContent = value;
+                        td.style.border = '1px solid #ddd';
+                        td.style.padding = '8px';
+                        row.appendChild(td);
+                    });
+
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+
+                // 清空并添加到show_area
+                var showArea = document.getElementById('show_area');
+                showArea.innerHTML = '';
+                showArea.appendChild(table);
+
+                // 设置表格高度和样式
+                showArea.style.overflowY = 'scroll';
+                showArea.style.maxHeight = '500px'; // 根据需要调整最大高度
+            })
+            .catch(error => console.error(error));
+    }
+
+    function fetchTableNames() {
+        // 发送请求给后端，获取数据库中的所有表
+        fetch('/fetch_table_names')
+            .then(response => response.json())
+            .then(data => {
+                // 清空下拉菜单
+                document.getElementById('tableSelect').innerHTML = '';
+
+                // 动态添加选项
+                data.forEach(tableName => {
+                    var option = document.createElement('option');
+                    option.value = tableName;
+                    option.text = tableName;
+                    document.getElementById('tableSelect').appendChild(option);
+                });
+
+                // 显示下拉菜单
+                document.getElementById('tableSelect').style.display = 'block';
+            })
+            .catch(error => console.error(error));
+    }
+
+    function uploadFile() {
+        var input = document.getElementById('fileInput');
+        var file = input.files[0];
+
+        if (file) {
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('File uploaded successfully:', data);
+                    // You can perform additional actions after successful upload
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                });
+        } else {
+            alert('Please select a file to upload.');
+        }
+    }
+
+    // 定义函数，用于运行算法
+    function runAlgorithm(algorithmName) {
+        var selectedTableName = document.getElementById('tableSelect').value;
+        const xx = algorithmName;
+        let tp = algorithmName;
+        let zb = algorithmName;
+        // 发送请求给后端
+        fetch(`/run_algorithm?name=${algorithmName}&table=${selectedTableName}`)
+            .then(response => response.json())
+            .then(data => {
+                // 处理返回的数据并展示聚类效果图像
+                if (xx === 'dbscan') {
+                    tp = 'clusterImage';
+                    zb = '0.'
+                } else if (xx === 'km') {
+                    tp = 'clusterImage2';
+                    zb = 'textareaResult2'
+                } else if (xx === 'kme') {
+                    tp = 'clusterImage3';
+                    zb = 'textareaResult3'
+                }
+                const clusterImage = document.getElementById(tp);
+                const textarea = document.getElementById(zb);
+                // 设置图像的src属性为Base64编码的图片数据
+                clusterImage.src = `data:image/png;base64, ${data.image_base64}`;
+                textarea.value = data.result_text;
+            })
+            .catch(error => console.error(error));
+    }
+</script>
+</body>
+</html>
